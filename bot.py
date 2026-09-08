@@ -44,14 +44,21 @@ class BFCBot(commands.Bot):
         if self.settings.command_guild_id:
             guild = discord.Object(id=self.settings.command_guild_id)
             self.tree.copy_global_to(guild=guild)
+
+            # Development commands belong only to this guild. Clear any older
+            # global registrations so Discord cannot show both copies.
+            self.tree.clear_commands(guild=None)
+            cleared_global = await self.tree.sync()
+            log.info("Cleared %d stale global application commands", len(cleared_global))
+
             synced = await self.tree.sync(guild=guild)
-            log.info("Synced %d top-level application commands to development guild %s", len(synced), guild.id)
-            for name in command_names(synced):
-                log.info("Synced application command: /%s", name)
+            log.info("Synced %d top-level application commands to development guild %s only", len(synced), guild.id)
+            for name in command_names(self.tree.get_commands(guild=guild)):
+                log.info("Synced development application command: /%s", name)
         else:
             synced = await self.tree.sync()
             log.info("Synced %d top-level global application commands", len(synced))
-            for name in command_names(synced):
+            for name in command_names(self.tree.get_commands()):
                 log.info("Synced global application command: /%s", name)
 
     async def on_command_error(self, interaction, error):
