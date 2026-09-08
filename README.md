@@ -17,6 +17,45 @@ Dependencies have been installed in this folder’s `.venv`. On a new machine, r
 
 **Live Discord verification still requires your real token, invited bot, and server roles.** Automated checks do not log in or create channels in a real server.
 
+## Token and launch details
+
+Paste your token into `.env` on this exact line:
+
+```dotenv
+DISCORD_TOKEN=PASTE_MY_TOKEN_HERE
+```
+
+Replace only `PASTE_MY_TOKEN_HERE` with the token from the Discord Developer Portal. Do not paste the token into `bot.py`, `.env.example`, or any committed file.
+
+From Terminal on macOS, start the bot with:
+
+```bash
+./run.sh
+```
+
+The direct equivalent is `.venv/bin/python bot.py`. The bot loads `.env` from the project directory, reports a clear error if the token is missing, and syncs commands to `COMMAND_GUILD_ID` when set. Without that setting, commands sync globally and may take longer to appear.
+
+## Invite this bot application
+
+Use the application that owns the token in the [Discord Developer Portal](https://discord.com/developers/applications): open **OAuth2 > URL Generator**, select these scopes, and generate the invite URL:
+
+- `bot`
+- `applications.commands`
+
+Grant these bot permissions when generating the URL:
+
+- Manage Channels
+- Manage Roles
+- View Channels
+- Send Messages
+- Read Message History
+- Attach Files
+- Embed Links
+- Connect
+- Speak
+
+Open the generated URL, choose the BFC Discord server, review the permissions, and authorize the invitation. The bot does not join voice calls or transmit audio; `Connect` and `Speak` are required so it can create and manage the private team voice channels.
+
 ## Balanced random teams
 
 ```text

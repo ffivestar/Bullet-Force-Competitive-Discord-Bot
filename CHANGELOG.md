@@ -2,6 +2,12 @@
 
 Updates are listed newest first. This log describes code changes; it does not indicate that a bot has been deployed or tested in a live Discord server.
 
+## 2026-09-08 — Token, launch, and invitation guide
+
+- Add exact `.env` token placement and macOS launch instructions to the README.
+- Document the application invite scopes and required Discord permissions.
+- Configuration startup improvements are recorded in commit [`f32e64d`](https://github.com/ffivestar/Bullet-Force-Competitive-Discord-Bot/commit/f32e64d).
+
 ## 2026-09-08 — Configuration startup follow-up
 
 - Load `.env` explicitly from the bot folder, regardless of the working directory.
