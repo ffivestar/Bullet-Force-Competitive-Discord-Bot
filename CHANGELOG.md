@@ -2,6 +2,13 @@
 
 Updates are listed newest first. This log describes code changes; it does not indicate that a bot has been deployed or tested in a live Discord server.
 
+## 2026-09-08 — Configuration startup follow-up
+
+- Load `.env` explicitly from the bot folder, regardless of the working directory.
+- Use the clearer `PASTE_MY_TOKEN_HERE` example and reject both old and new placeholder tokens.
+- Report invalid startup configuration as a readable log message.
+- Preserve the completed workflow in commit [`8491832`](https://github.com/ffivestar/Bullet-Force-Competitive-Discord-Bot/commit/8491832).
+
 ## 2026-09-08 — Complete tournament workflow
 
 ### Feature updates

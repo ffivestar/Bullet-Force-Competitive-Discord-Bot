@@ -7,7 +7,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 
-load_dotenv()
+load_dotenv(Path(__file__).parent / ".env")
 
 
 @dataclass(frozen=True)
@@ -25,8 +25,8 @@ class Settings:
     @classmethod
     def from_environment(cls) -> "Settings":
         token = os.getenv("DISCORD_TOKEN", "").strip()
-        if not token or token == "replace_with_your_bot_token":
-            raise ValueError("DISCORD_TOKEN is required. Copy .env.example to .env and set it.")
+        if not token or token in {"replace_with_your_bot_token", "PASTE_MY_TOKEN_HERE"}:
+            raise ValueError("DISCORD_TOKEN is missing. Paste your Discord bot token into .env after DISCORD_TOKEN=.")
 
         guild_id = os.getenv("COMMAND_GUILD_ID", "").strip()
         database_path = Path(os.getenv("DATABASE_PATH", "data/bfc.sqlite3"))

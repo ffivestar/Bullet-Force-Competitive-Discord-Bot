@@ -60,7 +60,12 @@ class BFCBot(commands.Bot):
 
 
 async def main() -> None:
-    settings = Settings.from_environment()
+    try:
+        settings = Settings.from_environment()
+    except ValueError as error:
+        logging.getLogger(__name__).error("Configuration error: %s", error)
+        return
+
     database = Database(settings.database_path)
     database.connect()
     bot = BFCBot(settings, database)
