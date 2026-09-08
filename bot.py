@@ -13,6 +13,7 @@ from presentation import send_text
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+log = logging.getLogger(__name__)
 
 
 class BFCBot(commands.Bot):
@@ -26,22 +27,27 @@ class BFCBot(commands.Bot):
         self.tree.on_error = self.on_command_error
 
     async def setup_hook(self) -> None:
-        await self.load_extension("cogs.general")
-        await self.load_extension("cogs.tournaments")
+        for extension in ("cogs.general", "cogs.tournaments"):
+            await self.load_extension(extension)
+            log.info("Loaded command extension %s", extension)
+
         if self.settings.command_guild_id:
             guild = discord.Object(id=self.settings.command_guild_id)
             self.tree.copy_global_to(guild=guild)
-            await self.tree.sync(guild=guild)
+            synced = await self.tree.sync(guild=guild)
+            log.info("Synced %d application commands to test guild %s: %s", len(synced), guild.id, ", ".join(command.name for command in synced))
         else:
-            await self.tree.sync()
+            synced = await self.tree.sync()
+            log.info("Synced %d global application commands: %s", len(synced), ", ".join(command.name for command in synced))
 
     async def on_command_error(self, interaction, error):
         cause = getattr(error, "original", error)
-        if isinstance(cause, RuleError):
-            await send_text(interaction, str(cause))
-        else:
-            logging.getLogger(__name__).error("Command failed", exc_info=(type(cause), cause, cause.__traceback__))
-            await send_text(interaction, "The action could not finish. Check the bot logs and permissions, then retry. Saved results are retained.")
+        log.error("Application command failed", exc_info=(type(cause), cause, cause.__traceback__))
+        message = str(cause) if isinstance(cause, RuleError) else "The action could not finish. Check the bot logs and permissions, then retry."
+        try:
+            await send_text(interaction, message)
+        except Exception:
+            log.exception("Unable to acknowledge failed application command")
 
     async def close(self):
         cog = self.get_cog("TournamentCog")
@@ -56,7 +62,7 @@ class BFCBot(commands.Bot):
         await super().close()
 
     async def on_ready(self) -> None:
-        logging.getLogger(__name__).info("Logged in as %s (%s)", self.user, self.user.id if self.user else "unknown")
+        log.info("Logged in as %s (%s)", self.user, self.user.id if self.user else "unknown")
 
 
 async def main() -> None:

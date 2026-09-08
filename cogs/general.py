@@ -11,7 +11,7 @@ class GeneralCog(commands.Cog):
 
     @app_commands.command(name="ping", description="Check whether the BFC bot is online.")
     async def ping(self, interaction: discord.Interaction) -> None:
-        await interaction.response.send_message(f"Pong. `{round(self.bot.latency * 1000)} ms`", ephemeral=True)
+        await interaction.response.send_message("BFC Tournament Bot is online!", ephemeral=True)
 
 
 async def setup(bot: commands.Bot) -> None:
