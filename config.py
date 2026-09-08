@@ -20,11 +20,12 @@ class Settings:
     tournament_staff_role_name: str
     bfc_admin_role_name: str
     grand_final_reset_default: bool
+    tier_role_names: tuple[str, str, str] = ("Tier 1", "Tier 2", "Tier 3")
 
     @classmethod
     def from_environment(cls) -> "Settings":
         token = os.getenv("DISCORD_TOKEN", "").strip()
-        if not token:
+        if not token or token == "replace_with_your_bot_token":
             raise ValueError("DISCORD_TOKEN is required. Copy .env.example to .env and set it.")
 
         guild_id = os.getenv("COMMAND_GUILD_ID", "").strip()
@@ -34,6 +35,7 @@ class Settings:
 
         return cls(
             discord_token=token,
+            tier_role_names=tuple(os.getenv(f"TIER_{i}_ROLE_NAME", f"Tier {i}") for i in (1, 2, 3)),
             database_path=database_path,
             command_guild_id=int(guild_id) if guild_id else None,
             tournament_category_name=os.getenv("TOURNAMENT_CATEGORY_NAME", "BFC Tournaments"),

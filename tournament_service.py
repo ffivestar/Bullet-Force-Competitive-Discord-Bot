@@ -6,7 +6,7 @@ from repositories import TournamentRepository
 
 
 class TournamentService:
-    """Application-layer operations; bracket advancement will live here as registration lands."""
+    """Legacy foundation API. The active tournament workflow uses engine.py and store.py."""
 
     def __init__(self, database: Database) -> None:
         self.repository = TournamentRepository(database)

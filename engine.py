@@ -145,8 +145,9 @@ def recompute(t):
                 teams.append(source)
             else:
                 parent = t['matches'][source]
-                ready &= parent['status'] in ('complete', 'bye')
-                teams.append(parent[kind] if ready else None)
+                parent_ready = parent['status'] in ('complete', 'bye')
+                ready &= parent_ready
+                teams.append(parent[kind] if parent_ready else None)
         m['teams'] = teams
         m['winner'] = m['loser'] = None
         if m['id'] == 'G2':
@@ -194,7 +195,7 @@ def submit(t, mid, scores, stats, actor, version):
     require(m is not None and m['version'] == version, 'The match changed. Open a fresh result form.')
     validate_result(t, mid, scores, stats)
     m['result'] = {'teams': list(m['teams']), 'scores': list(scores), 'stats': copy.deepcopy(stats),
-                   'by': str(actor), 'at': time.time()}
+                   'by': str(actor), 'at': time.time(), 'map': m['map'], 'region': m['region']}
     m['version'] += 1
     recompute(t)
 

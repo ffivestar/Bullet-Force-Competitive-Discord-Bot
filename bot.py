@@ -8,7 +8,8 @@ from discord.ext import commands
 
 from config import Settings
 from database import Database
-from tournament_service import TournamentService
+from engine import RuleError
+from presentation import send_text
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -19,10 +20,10 @@ class BFCBot(commands.Bot):
         intents = discord.Intents.default()
         intents.guilds = True
         intents.members = True
-        super().__init__(command_prefix="!", intents=intents)
+        super().__init__(command_prefix="!", intents=intents, allowed_mentions=discord.AllowedMentions.none())
         self.settings = settings
         self.database = database
-        self.tournament_service = TournamentService(database)
+        self.tree.on_error = self.on_command_error
 
     async def setup_hook(self) -> None:
         await self.load_extension("cogs.general")
@@ -33,6 +34,26 @@ class BFCBot(commands.Bot):
             await self.tree.sync(guild=guild)
         else:
             await self.tree.sync()
+
+    async def on_command_error(self, interaction, error):
+        cause = getattr(error, "original", error)
+        if isinstance(cause, RuleError):
+            await send_text(interaction, str(cause))
+        else:
+            logging.getLogger(__name__).error("Command failed", exc_info=(type(cause), cause, cause.__traceback__))
+            await send_text(interaction, "The action could not finish. Check the bot logs and permissions, then retry. Saved results are retained.")
+
+    async def close(self):
+        cog = self.get_cog("TournamentCog")
+        if cog:
+            cog.reconcile.cancel()
+            task = cog.reconcile.get_task()
+            if task:
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    pass
+        await super().close()
 
     async def on_ready(self) -> None:
         logging.getLogger(__name__).info("Logged in as %s (%s)", self.user, self.user.id if self.user else "unknown")
