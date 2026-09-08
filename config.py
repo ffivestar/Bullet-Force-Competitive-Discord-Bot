@@ -28,7 +28,11 @@ class Settings:
         if not token or token in {"replace_with_your_bot_token", "PASTE_MY_TOKEN_HERE"}:
             raise ValueError("DISCORD_TOKEN is missing. Paste your Discord bot token into .env after DISCORD_TOKEN=.")
 
-        guild_id = os.getenv("COMMAND_GUILD_ID", "").strip()
+        guild_id = os.getenv("GUILD_ID", os.getenv("COMMAND_GUILD_ID", "")).strip()
+        try:
+            command_guild_id = int(guild_id) if guild_id else None
+        except ValueError as error:
+            raise ValueError("GUILD_ID must be a numeric Discord server ID.") from error
         database_path = Path(os.getenv("DATABASE_PATH", "data/bfc.sqlite3"))
         if not database_path.is_absolute():
             database_path = Path(__file__).parent / database_path
@@ -37,7 +41,7 @@ class Settings:
             discord_token=token,
             tier_role_names=tuple(os.getenv(f"TIER_{i}_ROLE_NAME", f"Tier {i}") for i in (1, 2, 3)),
             database_path=database_path,
-            command_guild_id=int(guild_id) if guild_id else None,
+            command_guild_id=command_guild_id,
             tournament_category_name=os.getenv("TOURNAMENT_CATEGORY_NAME", "BFC Tournaments"),
             match_results_channel_name=os.getenv("MATCH_RESULTS_CHANNEL_NAME", "match-results"),
             tournament_staff_role_name=os.getenv("TOURNAMENT_STAFF_ROLE_NAME", "Tournament Staff"),

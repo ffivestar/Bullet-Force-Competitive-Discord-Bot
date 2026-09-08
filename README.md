@@ -10,7 +10,7 @@ Dependencies have been installed in this folder’s `.venv`. On a new machine, r
 
 1. Create a bot in the [Discord Developer Portal](https://discord.com/developers/applications). On its **Bot** page, enable **Server Members Intent**. Message Content Intent is not needed.
 2. Invite it with the `bot` and `applications.commands` scopes. Grant **Manage Channels**, **Manage Roles** (channel permission overwrites), **View Channels**, **Send Messages**, **Read Message History**, **Attach Files**, **Embed Links**, **Connect**, and **Speak**. Give it these permissions in the channel where you will start the tournament too. The bot does not join voice or transmit audio.
-3. Copy `.env.example` to `.env` if you have not run setup. Set `DISCORD_TOKEN` to your bot token. Set `COMMAND_GUILD_ID` to your Discord server ID for immediate server command sync. Leave it empty for global commands, which can take time to appear. Never share or commit `.env`.
+3. Copy `.env.example` to `.env` if you have not run setup. Set `DISCORD_TOKEN` to your bot token and set `GUILD_ID` to your development Discord server ID for immediate server command sync. Leave it empty for global commands, which can take time to appear. Never share or commit `.env`.
 4. Create **BFC Admin**, **Tournament Staff**, **Tier 1**, **Tier 2**, and **Tier 3** roles. Give staff/admin roles to the appropriate moderators and exactly one tier role to each player using random teams. Role names can be changed in `.env`. Discord administrators also have full bot access.
 5. Run `./run.sh`. Keep the process running and the computer awake; stopping it takes the bot offline. Use one bot process per database. The SQLite database is created automatically at `data/bfc.sqlite3`.
 6. Check `/ping`, then follow one of the workflows below.
@@ -33,7 +33,15 @@ From Terminal on macOS, start the bot with:
 ./run.sh
 ```
 
-The direct equivalent is `.venv/bin/python bot.py`. The bot loads `.env` from the project directory, reports a clear error if the token is missing, and syncs commands to `COMMAND_GUILD_ID` when set. Without that setting, commands sync globally and may take longer to appear.
+The direct equivalent is `.venv/bin/python bot.py`. The bot loads `.env` from the project directory, reports a clear error if the token is missing, and syncs commands to `GUILD_ID` when set. Without that setting, commands sync globally and may take longer to appear.
+
+For development, replace the blank value on this line in `.env`:
+
+```dotenv
+GUILD_ID=YOUR_DISCORD_SERVER_ID
+```
+
+Use the server ID from Discord Developer Mode. The legacy `COMMAND_GUILD_ID` setting is still accepted for compatibility, but `GUILD_ID` takes precedence.
 
 ## Invite this bot application
 

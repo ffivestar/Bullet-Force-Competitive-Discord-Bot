@@ -16,6 +16,16 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name
 log = logging.getLogger(__name__)
 
 
+def command_names(commands_list, prefix=""):
+    names = []
+    for command in commands_list:
+        full_name = f"{prefix} {command.name}".strip()
+        names.append(full_name)
+        children = getattr(command, "commands", ())
+        names.extend(command_names(children, full_name))
+    return names
+
+
 class BFCBot(commands.Bot):
     def __init__(self, settings: Settings, database: Database) -> None:
         intents = discord.Intents.default()
@@ -35,10 +45,14 @@ class BFCBot(commands.Bot):
             guild = discord.Object(id=self.settings.command_guild_id)
             self.tree.copy_global_to(guild=guild)
             synced = await self.tree.sync(guild=guild)
-            log.info("Synced %d application commands to test guild %s: %s", len(synced), guild.id, ", ".join(command.name for command in synced))
+            log.info("Synced %d top-level application commands to development guild %s", len(synced), guild.id)
+            for name in command_names(synced):
+                log.info("Synced application command: /%s", name)
         else:
             synced = await self.tree.sync()
-            log.info("Synced %d global application commands: %s", len(synced), ", ".join(command.name for command in synced))
+            log.info("Synced %d top-level global application commands", len(synced))
+            for name in command_names(synced):
+                log.info("Synced global application command: /%s", name)
 
     async def on_command_error(self, interaction, error):
         cause = getattr(error, "original", error)
