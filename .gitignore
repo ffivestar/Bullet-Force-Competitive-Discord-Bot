@@ -6,3 +6,4 @@ data/*.sqlite3
 .DS_Store
 data/*.sqlite3-*
 .pytest_cache/
+tools/bullet_force_probe/captures/*

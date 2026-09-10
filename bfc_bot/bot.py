@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from pathlib import Path
 
 import discord
 from discord.ext import commands
@@ -29,7 +30,6 @@ class BFCBot(commands.Bot):
         self.player_repo = PlayerRepository(database)
         self.match_repo = MatchRepository(database)
         self.ranked_service = RankedService(self.player_repo, self.match_repo)
-        self.tree.on_error = self.on_command_error
 
     async def setup_hook(self) -> None:
         for extension in ("commands.registration", "commands.ranked"):
@@ -46,19 +46,10 @@ class BFCBot(commands.Bot):
             synced = await self.tree.sync()
             log.info("Synced %d global application commands", len(synced))
 
-    async def on_command_error(self, interaction, error):
-        cause = getattr(error, "original", error)
-        log.error("Application command failed", exc_info=(type(cause), cause, cause.__traceback__))
-        message = str(cause) if cause else "The action could not finish. Check the bot logs and permissions, then retry."
-        try:
-            await interaction.response.send_message(message, ephemeral=True)
-        except Exception:
-            log.exception("Unable to acknowledge failed application command")
-
     async def on_ready(self) -> None:
-        log.info("Logged in as %s (%s)", self.user, self.user.id if self.user else "unknown")
+        log.info("Logged in as %s", self.user)
 
-    async def close(self):
+    async def close(self) -> None:
         await super().close()
 
 
