@@ -128,6 +128,10 @@ class MatchRepository:
             ),
         )
 
+    def clear_all_matches(self) -> None:
+        self.database.execute("DELETE FROM ranked_match_players")
+        self.database.execute("DELETE FROM ranked_matches")
+
     def get_active_matches(self) -> list[RankedMatch]:
         rows = self.database.fetch_all(
             "SELECT * FROM ranked_matches WHERE status IN ('QUEUING', 'GENERATING', 'READY') ORDER BY id ASC"

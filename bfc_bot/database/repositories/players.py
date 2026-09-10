@@ -77,8 +77,117 @@ class PlayerRepository:
         )
         return self.get_by_discord_id(discord_user_id)
 
+    def delete(self, discord_user_id: int) -> bool:
+        cursor = self.database.execute(
+            "DELETE FROM players WHERE discord_user_id = ?",
+            (discord_user_id,),
+        )
+        return cursor.rowcount > 0
+
+    def record_match_result(self, discord_user_id: int, kills: int, deaths: int, won: bool) -> Player | None:
+        if not isinstance(kills, int) or isinstance(kills, bool) or kills < 0:
+            raise ValueError("Kills must be a non-negative integer.")
+        if not isinstance(deaths, int) or isinstance(deaths, bool) or deaths < 0:
+            raise ValueError("Deaths must be a non-negative integer.")
+
+        existing = self.get_by_discord_id(discord_user_id)
+        if existing is None:
+            raise ValueError("Player is not registered.")
+
+        now = datetime.utcnow().isoformat()
+        self.database.execute(
+            """
+            UPDATE players
+            SET matches_played = matches_played + 1,
+                wins = wins + ?,
+                losses = losses + ?,
+                kills = kills + ?,
+                deaths = deaths + ?,
+                updated_at = ?
+            WHERE discord_user_id = ?
+            """,
+            (1 if won else 0, 0 if won else 1, kills, deaths, now, discord_user_id),
+        )
+        return self.get_by_discord_id(discord_user_id)
+
     def rows(self) -> list[Player]:
         return [self._row_to_player(row) for row in self.database.fetch_all("SELECT * FROM players ORDER BY ign ASC")]
+
+    def apply_rating_delta(self, discord_user_id: int, delta: int) -> Player | None:
+        if not isinstance(delta, int) or isinstance(delta, bool):
+            raise ValueError("Rating delta must be an integer.")
+
+        existing = self.get_by_discord_id(discord_user_id)
+        if existing is None:
+            raise ValueError("Player is not registered.")
+
+        updated_rating = max(0, existing.rating_points + delta)
+        now = datetime.utcnow().isoformat()
+        self.database.execute(
+            "UPDATE players SET rating_points = ?, updated_at = ? WHERE discord_user_id = ?",
+            (updated_rating, now, discord_user_id),
+        )
+        return self.get_by_discord_id(discord_user_id)
+
+    def reset_all_stats(self) -> None:
+        now = datetime.utcnow().isoformat()
+        self.database.execute(
+            """
+            UPDATE players
+            SET rating_points = 1000,
+                matches_played = 0,
+                wins = 0,
+                losses = 0,
+                kills = 0,
+                deaths = 0,
+                updated_at = ?
+            """,
+            (now,),
+        )
+
+    def update_stats(
+        self,
+        discord_user_id: int,
+        *,
+        matches_played: int,
+        wins: int,
+        losses: int,
+        kills: int,
+        deaths: int,
+        rating_points: int,
+    ) -> Player | None:
+        if matches_played < 0 or wins < 0 or losses < 0 or kills < 0 or deaths < 0 or rating_points < 0:
+            raise ValueError("All stat values must be non-negative integers.")
+
+        existing = self.get_by_discord_id(discord_user_id)
+        if existing is None:
+            raise ValueError("Player is not registered.")
+
+        now = datetime.utcnow().isoformat()
+        self.database.execute(
+            """
+            UPDATE players
+            SET rating_points = ?,
+                matches_played = ?,
+                wins = ?,
+                losses = ?,
+                kills = ?,
+                deaths = ?,
+                updated_at = ?
+            WHERE discord_user_id = ?
+            """,
+            (
+                rating_points,
+                matches_played,
+                wins,
+                losses,
+                kills,
+                deaths,
+                now,
+                discord_user_id,
+            ),
+        )
+        return self.get_by_discord_id(discord_user_id)
 
     def _row_to_player(self, row: Any) -> Player:
         return Player(

@@ -48,12 +48,32 @@ class BFCBot(commands.Bot):
 
     async def on_command_error(self, interaction, error):
         cause = getattr(error, "original", error)
+
+        if isinstance(cause, discord.NotFound):
+            log.warning("Ignoring stale interaction error for an application command: %s", cause)
+            return
+
+        if isinstance(cause, discord.InteractionResponded):
+            log.warning("Ignoring interaction already responded error: %s", cause)
+            return
+
+        if isinstance(cause, discord.HTTPException):
+            if cause.code in (10062, 40060):
+                log.warning("Ignoring already acknowledged or stale interaction error: %s", cause)
+                return
+
         log.error("Application command failed", exc_info=(type(cause), cause, cause.__traceback__))
-        message = str(cause) if cause else "The action could not finish. Check the bot logs and permissions, then retry."
+
+        if isinstance(cause, discord.Forbidden):
+            message = "I need the 'Manage Nicknames' permission in this server to update Discord names. Please grant that permission and retry."
+        else:
+            message = str(cause) if cause else "The action could not finish. Check the bot logs and permissions, then retry."
+
         try:
-            await interaction.response.send_message(message, ephemeral=True)
-        except Exception:
-            log.exception("Unable to acknowledge failed application command")
+            if interaction is not None and hasattr(interaction, "response"):
+                await interaction.response.send_message(message, ephemeral=True)
+        except Exception as send_error:
+            log.warning("Unable to acknowledge failed application command: %s", send_error)
 
     async def on_ready(self) -> None:
         log.info("Logged in as %s (%s)", self.user, self.user.id if self.user else "unknown")

@@ -28,6 +28,80 @@ class RankedFoundationTests(unittest.TestCase):
             finally:
                 db.close()
 
+    def test_player_unregistration_removes_profile_record(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Database(Path(tmp) / "ranked.sqlite3")
+            db.connect()
+            try:
+                players = PlayerRepository(db)
+                players.create(1, "alice", "PC-5ive", 1000)
+                self.assertIsNotNone(players.get_by_discord_id(1))
+
+                deleted = players.delete(1)
+                self.assertTrue(deleted)
+                self.assertIsNone(players.get_by_discord_id(1))
+                self.assertFalse(players.exists_ign("PC-5ive"))
+            finally:
+                db.close()
+
+    def test_player_stats_accumulate_from_match_results(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Database(Path(tmp) / "ranked.sqlite3")
+            db.connect()
+            try:
+                players = PlayerRepository(db)
+                players.create(1, "alice", "PC-1", 1000)
+                players.create(2, "bob", "PC-2", 1000)
+
+                players.record_match_result(1, kills=12, deaths=3, won=True)
+                players.record_match_result(2, kills=4, deaths=11, won=False)
+
+                alice = players.get_by_discord_id(1)
+                bob = players.get_by_discord_id(2)
+
+                self.assertIsNotNone(alice)
+                self.assertIsNotNone(bob)
+                self.assertEqual(alice.matches_played, 1)
+                self.assertEqual(alice.wins, 1)
+                self.assertEqual(alice.losses, 0)
+                self.assertEqual(alice.kills, 12)
+                self.assertEqual(alice.deaths, 3)
+                self.assertEqual(bob.matches_played, 1)
+                self.assertEqual(bob.wins, 0)
+                self.assertEqual(bob.losses, 1)
+                self.assertEqual(bob.kills, 4)
+                self.assertEqual(bob.deaths, 11)
+            finally:
+                db.close()
+
+    def test_player_stats_can_be_fully_overwritten(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Database(Path(tmp) / "ranked.sqlite3")
+            db.connect()
+            try:
+                players = PlayerRepository(db)
+                players.create(1, "alice", "PC-1", 1000)
+
+                updated = players.update_stats(
+                    1,
+                    matches_played=12,
+                    wins=8,
+                    losses=4,
+                    kills=33,
+                    deaths=22,
+                    rating_points=1400,
+                )
+
+                self.assertIsNotNone(updated)
+                self.assertEqual(updated.matches_played, 12)
+                self.assertEqual(updated.wins, 8)
+                self.assertEqual(updated.losses, 4)
+                self.assertEqual(updated.kills, 33)
+                self.assertEqual(updated.deaths, 22)
+                self.assertEqual(updated.rating_points, 1400)
+            finally:
+                db.close()
+
     def test_match_repository_tracks_active_queues_and_unique_ids(self):
         with tempfile.TemporaryDirectory() as tmp:
             db = Database(Path(tmp) / "ranked.sqlite3")
